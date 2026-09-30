@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>くるまで学ぼう！1から5のかず - リアルな車とエキゾーストノート</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&family=Orbitron:wght@800;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Animated Asphalt Lane Lines */
+        @keyframes roadStripes {
+            0% { background-position: 0 0; }
+            100% { background-position: -120px 0; }
+        }
+
+        .road-animating {
+            animation: roadStripes 0.25s linear infinite;
+        }
+
+        /* Wheel Rotation Animation */
+        @keyframes wheelSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .wheel-spinning {
+            animation: wheelSpin 0.2s linear infinite;
+            transform-origin: center;
+        }
+
+        /* Speed Streak Overlay Lines */
+        @keyframes speedLinesAnim {
+            0% { background-position: 0 0; opacity: 0.3; }
+            50% { opacity: 0.9; }
+            100% { background-position: -300px 0; opacity: 0.3; }
+        }
+
+        .speed-streaks {
+            background: repeating-linear-gradient(90deg, rgba(255,255,255,0.2) 0px, rgba(255,255,255,0.2) 20px, transparent 20px, transparent 80px);
+            animation: speedLinesAnim 0.15s linear infinite;
+        }
+
+        /* Pulsing Glow Effect for Headlights */
+        @keyframes headlightGlow {
+            0%, 100% { opacity: 0.85; filter: drop-shadow(0px 0px 8px rgba(255, 255, 200, 0.9)); }
+            50% { opacity: 1.0; filter: drop-shadow(0px 0px 16px rgba(255, 255, 220, 1)); }
+        }
+        .headlight-beam {
+            animation: headlightGlow 1.2s ease-in-out infinite;
+        }
+
+        /* Exhaust Flame Pulse Animation */
+        @keyframes exhaustFlamePulse {
+            0% { transform: scaleX(0.4) scaleY(0.7); opacity: 0.5; }
+            50% { transform: scaleX(1.4) scaleY(1.2); opacity: 1; filter: drop-shadow(0 0 12px #38bdf8); }
+            100% { transform: scaleX(0.6) scaleY(0.8); opacity: 0.7; }
+        }
+        .exhaust-flame-active {
+            animation: exhaustFlamePulse 0.08s ease-in-out infinite alternate;
+            transform-origin: left center;
+        }
+
+        /* Goal Banner Animation */
+        @keyframes goalPop {
+            0% { transform: scale(0.2) rotate(-10deg); opacity: 0; }
+            60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .animate-goal-pop {
+            animation: goalPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Pop in animation */
+        @keyframes popIn {
+            0% { transform: scale(0.6) translateY(10px); opacity: 0; }
+            70% { transform: scale(1.05) translateY(-2px); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .pop-in {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-200 via-sky-100 to-amber-50 min-h-screen flex flex-col justify-between overflow-x-hidden text-slate-800">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 p-3 sm:p-4 shadow-xl border-b-4 border-orange-600 text-white sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-red-600 p-2 sm:p-2.5 rounded-2xl shadow-inner text-2xl sm:text-3xl flex items-center justify-center border-2 border-red-200">
+                    <i class="fa-solid fa-car-side"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-wider drop-shadow-md flex items-center gap-2">
+                        くるまでまなぼう！ 🏎️
+                    </h1>
+                    <p class="text-xs sm:text-sm font-bold text-amber-100">超リアルエキゾーストノート＆1〜5のかずのべんきょう</p>
+                </div>
+            </div>
+
+            <!-- Mode Switch Buttons & Engine Preview Button -->
+            <div class="flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
+                <button onclick="testExhaustNoteSound()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-amber-400 border border-amber-400/50 shadow-md font-black text-xs sm:text-sm flex items-center gap-1.5 transition-all transform active:scale-95">
+                    <i class="fa-solid fa-volume-high text-red-500 animate-pulse"></i> 🔊 エンジンおと試聴
+                </button>
+
+                <div class="flex bg-black/20 p-1 rounded-2xl backdrop-blur-md justify-center gap-1 border border-white/20">
+                    <button id="mode-learn-btn" onclick="switchMode('learn')" class="px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 bg-white text-orange-600 shadow-md flex items-center gap-1">
+                        <i class="fa-solid fa-flag-checkered"></i> かぞえてみよう
+                    </button>
+                    <button id="mode-quiz-btn" onclick="switchMode('quiz')" class="px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 text-white hover:bg-white/10 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-question"></i> クイズ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Stage Container -->
+    <main class="max-w-5xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col justify-center items-center gap-4">
+
+        <!-- Banner / Display Info -->
+        <div id="info-banner" class="w-full text-center bg-white/90 backdrop-blur-md rounded-3xl p-3 sm:p-4 shadow-lg border-4 border-amber-300 transition-all transform">
+            <p id="info-text" class="text-lg sm:text-2xl font-black text-slate-800 tracking-wide">
+                かずボタンを おして リアルな くるまを かぞえてみよう！
+            </p>
+        </div>
+
+        <!-- Engine Profile Selector Bar -->
+        <div class="w-full bg-slate-900/80 backdrop-blur-md text-white p-2.5 rounded-2xl border border-slate-700 shadow-md flex items-center justify-between flex-wrap gap-2 text-xs sm:text-sm">
+            <div class="flex items-center gap-2 font-bold text-amber-300">
+                <i class="fa-solid fa-gears"></i> エンジンタイプ (Exhaust Engine Note):
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="setEngineProfile('v8')" id="engine-v8-btn" class="engine-selector-btn px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-black border border-amber-300 shadow">V8 Big Block</button>
+                <button onclick="setEngineProfile('turbo')" id="engine-turbo-btn" class="engine-selector-btn px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold border border-slate-600">Twin Turbo V6</button>
+                <button onclick="setEngineProfile('v10')" id="engine-v10-btn" class="engine-selector-btn px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold border border-slate-600">Supercharged V10</button>
+            </div>
+        </div>
+
+        <!-- Realistic Track & Highway Container -->
+        <div id="track-viewport" class="w-full bg-slate-950 rounded-3xl border-4 sm:border-8 border-slate-800 shadow-2xl overflow-hidden relative p-2 sm:p-4 flex flex-col gap-2 min-h-[340px] sm:min-h-[440px] justify-center">
+            
+            <!-- Speed Lines Overlay (Toggled during boost) -->
+            <div id="speed-lines-overlay" class="absolute inset-0 pointer-events-none z-20 hidden speed-streaks"></div>
+
+            <!-- Finish Line Flag & Distance Markers -->
+            <div class="absolute right-6 top-0 bottom-0 w-12 border-l-8 border-dashed border-yellow-400 flex flex-col justify-between items-center py-2 z-0 pointer-events-none bg-slate-900/50">
+                <div class="w-full h-full opacity-80 flex flex-col justify-around items-center">
+                    <span class="text-2xl sm:text-3xl filter drop-shadow">🏁</span>
+                    <span class="text-2xl sm:text-3xl filter drop-shadow">🏁</span>
+                    <span class="text-2xl sm:text-3xl filter drop-shadow">🏁</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Track Lanes Container -->
+            <div id="road-container" class="w-full flex flex-col gap-2.5 relative z-10">
+                <!-- Cars dynamically injected here -->
+            </div>
+        </div>
+
+        <!-- LEARN MODE CONTROLS -->
+        <div id="learn-controls" class="w-full flex flex-col items-center gap-4">
+            
+            <!-- Number Selectors (1 to 5) -->
+            <div class="flex justify-center items-center gap-2 sm:gap-4 w-full max-w-xl">
+                <button onclick="selectNumber(1)" class="num-btn w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-rose-500 to-red-600 text-white text-2xl sm:text-4xl font-black shadow-lg border-b-4 border-red-800 active:translate-y-1 transition-all flex items-center justify-center relative">
+                    1
+                </button>
+                <button onclick="selectNumber(2)" class="num-btn w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-amber-400 to-orange-500 text-white text-2xl sm:text-4xl font-black shadow-lg border-b-4 border-orange-700 active:translate-y-1 transition-all flex items-center justify-center relative">
+                    2
+                </button>
+                <button onclick="selectNumber(3)" class="num-btn w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-emerald-400 to-green-600 text-white text-2xl sm:text-4xl font-black shadow-lg border-b-4 border-green-800 active:translate-y-1 transition-all flex items-center justify-center relative">
+                    3
+                </button>
+                <button onclick="selectNumber(4)" class="num-btn w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-600 text-white text-2xl sm:text-4xl font-black shadow-lg border-b-4 border-blue-800 active:translate-y-1 transition-all flex items-center justify-center relative">
+                    4
+                </button>
+                <button onclick="selectNumber(5)" class="num-btn w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-purple-500 to-indigo-600 text-white text-2xl sm:text-4xl font-black shadow-lg border-b-4 border-indigo-800 active:translate-y-1 transition-all flex items-center justify-center relative">
+                    5
+                </button>
+            </div>
+
+            <!-- Action Buttons Bar -->
+            <div class="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
+                <button id="drive-btn" onclick="startDrivingAnimation()" class="px-8 py-3.5 sm:py-4 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xl sm:text-2xl font-black rounded-3xl shadow-xl border-b-4 border-teal-800 active:translate-y-1 transition-all flex items-center gap-3">
+                    <i class="fa-solid fa-gauge-high text-yellow-300"></i> はしる (FULL ACCEL!)
+                </button>
+                <button onclick="playHonkSound()" class="px-6 py-3.5 sm:py-4 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 text-lg sm:text-xl font-black rounded-3xl shadow-lg border-b-4 border-amber-700 active:translate-y-1 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-bullhorn"></i> ぷぷー！
+                </button>
+            </div>
+        </div>
+
+        <!-- QUIZ MODE CONTROLS -->
+        <div id="quiz-controls" class="w-full flex flex-col items-center gap-4 hidden">
+            <p class="text-lg sm:text-xl font-black text-slate-800 bg-white/80 px-6 py-2 rounded-full shadow-sm">
+                くるまは ぜんぶで なんだい あるかな？
+            </p>
+            
+            <div class="flex justify-center items-center gap-2 sm:gap-4 w-full max-w-xl">
+                <button onclick="checkAnswer(1)" class="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-white border-4 border-rose-400 text-rose-600 hover:bg-rose-50 text-2xl sm:text-4xl font-black shadow-lg active:scale-95 transition-all">1</button>
+                <button onclick="checkAnswer(2)" class="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-white border-4 border-amber-400 text-amber-600 hover:bg-amber-50 text-2xl sm:text-4xl font-black shadow-lg active:scale-95 transition-all">2</button>
+                <button onclick="checkAnswer(3)" class="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-white border-4 border-emerald-400 text-emerald-600 hover:bg-emerald-50 text-2xl sm:text-4xl font-black shadow-lg active:scale-95 transition-all">3</button>
+                <button onclick="checkAnswer(4)" class="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-white border-4 border-sky-400 text-sky-600 hover:bg-sky-50 text-2xl sm:text-4xl font-black shadow-lg active:scale-95 transition-all">4</button>
+                <button onclick="checkAnswer(5)" class="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-white border-4 border-purple-400 text-purple-600 hover:bg-purple-50 text-2xl sm:text-4xl font-black shadow-lg active:scale-95 transition-all">5</button>
+            </div>
+
+            <button onclick="generateNextQuizQuestion()" class="mt-2 px-6 py-2.5 bg-slate-700 hover:bg-slate-800 text-white font-black rounded-2xl shadow transition-all text-sm sm:text-base flex items-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> つぎの もんだい
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Goal & Celebration Modal -->
+    <div id="celebration-overlay" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex flex-col justify-center items-center pointer-events-none opacity-0 transition-opacity duration-300">
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 rounded-3xl p-6 sm:p-8 text-center shadow-2xl transform scale-75 transition-transform duration-300 max-w-md mx-4 border-8 border-yellow-400 text-white relative overflow-hidden" id="celebration-card">
+            
+            <div id="celebration-stars" class="text-4xl sm:text-5xl mb-2 flex justify-center gap-2 animate-bounce">
+                ⭐ ⭐ ⭐
+            </div>
+
+            <!-- Dynamic GOAL Banner -->
+            <div class="font-orbitron text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] tracking-widest my-1 animate-goal-pop">
+                GOAL!!
+            </div>
+
+            <h2 id="celebration-title" class="text-2xl sm:text-3xl font-black text-amber-300 mb-2">だいせいかい！</h2>
+            <p id="celebration-text" class="text-base sm:text-lg font-bold text-slate-200 mb-6">ぜんぶの くるまが フィニッシュ！</p>
+
+            <button onclick="closeCelebration()" class="pointer-events-auto px-8 py-3.5 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white font-black rounded-2xl text-lg sm:text-xl shadow-xl hover:brightness-110 active:scale-95 border-2 border-yellow-200 flex items-center justify-center gap-2 mx-auto">
+                <i class="fa-solid fa-flag-checkered"></i> つぎへ すすむ 🚀
+            </button>
+        </div>
+    </div>
+
+    <footer class="p-3 text-center text-xs font-bold text-slate-600 bg-white/60 border-t border-slate-200">
+        リアルな車とエキゾーストノートで学ぼう！1から5のかず - キッズ知育アプリ
+    </footer>
+
+    <script>
+        const REALISTIC_CARS = [
+            {
+                name: 'レッド・スポーツカー',
+                type: 'V8 Supercar',
+                colorName: 'あか',
+                badgeBg: 'bg-red-500',
+                getSvg: (wheelClass = '', flameActive = false) => `
+                <svg viewBox="0 0 260 85" class="w-40 sm:w-52 h-auto overflow-visible">
+                    <defs>
+                        <linearGradient id="redMetallic" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ff6b6b"/>
+                            <stop offset="30%" stop-color="#ee2727"/>
+                            <stop offset="70%" stop-color="#b91c1c"/>
+                            <stop offset="100%" stop-color="#7f1d1d"/>
+                        </linearGradient>
+                        <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9"/>
+                            <stop offset="70%" stop-color="#0284c7" stop-opacity="0.95"/>
+                            <stop offset="100%" stop-color="#0f172a" stop-opacity="0.95"/>
+                        </linearGradient>
+                        <radialGradient id="chromeRim" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="40%" stop-color="#cbd5e1"/>
+                            <stop offset="70%" stop-color="#475569"/>
+                            <stop offset="100%" stop-color="#0f172a"/>
+                        </radialGradient>
+                        <linearGradient id="nitrousFlame" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="25%" stop-color="#38bdf8"/>
+                            <stop offset="60%" stop-color="#3b82f6"/>
+                            <stop offset="100%" stop-color="#818cf8" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- EXHAUST FLAME & NITROUS FIRE -->
+                    <g transform="translate(-15, 52)" class="${flameActive ? 'exhaust-flame-active' : 'hidden'}">
+                        <path d="M 25 0 Q -15 -8 -45 0 Q -15 8 25 0 Z" fill="url(#nitrousFlame)"/>
+                        <circle cx="-15" cy="0" r="6" fill="#60a5fa" filter="drop-shadow(0 0 8px #3b82f6)"/>
+                    </g>
+
+                    <ellipse cx="120" cy="78" rx="100" ry="6" fill="#000" opacity="0.45"/>
+                    <path d="M 15 68 L 225 68 L 220 74 L 20 74 Z" fill="#0f172a"/>
+                    <path d="M 10 58 Q 12 45 35 42 L 75 32 Q 105 16 145 16 L 175 22 Q 215 36 230 52 Q 235 60 225 68 L 15 68 Z" fill="url(#redMetallic)"/>
+                    <path d="M 30 52 Q 120 48 215 54" stroke="#fca5a5" stroke-width="2" fill="none" opacity="0.6"/>
+
+                    <!-- Windows -->
+                    <path d="M 78 32 Q 105 18 142 18 L 165 24 Q 155 34 140 34 L 82 34 Z" fill="url(#glassGrad)"/>
+                    <path d="M 85 30 L 138 20" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+
+                    <!-- Headlight -->
+                    <ellipse cx="228" cy="52" rx="4" ry="3" fill="#ffffff" class="headlight-beam"/>
+
+                    <!-- Rear Dual Exhaust Pipe -->
+                    <rect x="6" y="52" width="10" height="6" rx="1" fill="#475569" stroke="#94a3b8"/>
+
+                    <!-- Wheels -->
+                    <g transform="translate(180, 64)">
+                        <circle cx="0" cy="0" r="16" fill="#1e293b"/>
+                        <circle cx="0" cy="0" r="10" fill="url(#chromeRim)" class="${wheelClass}"/>
+                        <g class="${wheelClass}">
+                            <line x1="-8" y1="0" x2="8" y2="0" stroke="#f8fafc" stroke-width="2"/>
+                            <line x1="0" y1="-8" x2="0" y2="8" stroke="#f8fafc" stroke-width="2"/>
+                        </g>
+                    </g>
+                    <g transform="translate(55, 64)">
+                        <circle cx="0" cy="0" r="16" fill="#1e293b"/>
+                        <circle cx="0" cy="0" r="10" fill="url(#chromeRim)" class="${wheelClass}"/>
+                        <g class="${wheelClass}">
+                            <line x1="-8" y1="0" x2="8" y2="0" stroke="#f8fafc" stroke-width="2"/>
+                            <line x1="0" y1="-8" x2="0" y2="8" stroke="#f8fafc" stroke-width="2"/>
+                        </g>
+                    </g>
+                </svg>`
+            },
+            {
+                name: 'ブルー・セダン',
+                type: 'Twin Turbo Sedan',
+                colorName: 'あお',
+                badgeBg: 'bg-blue-600',
+                getSvg: (wheelClass = '', flameActive = false) => `
+                <svg viewBox="0 0 260 85" class="w-40 sm:w-52 h-auto overflow-visible">
+                    <defs>
+                        <linearGradient id="blueMetallic" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#60a5fa"/>
+                            <stop offset="30%" stop-color="#2563eb"/>
+                            <stop offset="70%" stop-color="#1d4ed8"/>
+                            <stop offset="100%" stop-color="#1e3a8a"/>
+                        </linearGradient>
+                    </defs>
+
+                    <g transform="translate(-15, 52)" class="${flameActive ? 'exhaust-flame-active' : 'hidden'}">
+                        <path d="M 25 0 Q -15 -8 -45 0 Q -15 8 25 0 Z" fill="url(#nitrousFlame)"/>
+                    </g>
+
+                    <ellipse cx="120" cy="78" rx="98" ry="6" fill="#000" opacity="0.45"/>
+                    <path d="M 12 58 Q 15 44 40 42 L 70 30 Q 95 18 140 18 L 170 26 Q 210 38 228 52 Q 234 60 222 68 L 15 68 Z" fill="url(#blueMetallic)"/>
+                    <path d="M 72 30 Q 95 20 135 20 L 160 28 L 72 30 Z" fill="url(#glassGrad)"/>
+                    <ellipse cx="225" cy="50" rx="5" ry="4" fill="#ffffff" class="headlight-beam"/>
+                    <rect x="6" y="52" width="10" height="5" rx="1" fill="#475569"/>
+
+                    <g transform="translate(175, 64)">
+                        <circle cx="0" cy="0" r="15" fill="#1e293b"/>
+                        <circle cx="0" cy="0" r="9" fill="url(#chromeRim)" class="${wheelClass}"/>
+                        <g class="${wheelClass}">
+                            <line x1="-7" y1="0" x2="7" y2="0" stroke="#f8fafc" stroke-width="2"/>
+                            <line x1="0" y1="-7" x2="0" y2="7" stroke="#f8fafc" stroke-width="2"/>
+                        </g>
+                    </g>
+                    <g transform="translate(55, 64)">
+                        <circle cx="0" cy="0" r="15" fill="#1e293b"/>
+                        <circle cx="0" cy="0" r="9" fill="url(#chromeRim)" class="${wheelClass}"/>
+                        <g class="${wheelClass}">
+                            <line x1="-7" y1="0" x2="7" y2="0" stroke="#f8fafc" stroke-width="2"/>
+                            <line x1="0" y1="-7" x2="0" y2="7" stroke="#f8fafc" stroke-width="2"/>
+                        </g>
+                    </g>
+                </svg>`
+            },
+            {
+                name: 'イエロー・スーパーカー',
+                type: 'V10 Hypercar',
+                colorName: 'きいろ',
+                badgeBg: 'bg-amber-500',
+                getSvg: (wheelClass = '', flameActive = false) => `
+                <svg viewBox="0 0 260 85" class="w-40 sm:w-52 h-auto overflow-visible">
+                    <defs>
+                        <linearGradient id="yellowMetallic" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#fef08a"/>
+                            <stop offset="30%" stop-color="#facc15"/>
+                            <stop offset="70%" stop-color="#eab308"/>
+                            <stop offset="100%" stop-color="#854d0e"/>
+                        </linearGradient>
+                    </defs>
+
+                    <g transform="translate(-15, 50)" class="${flameActive ? 'exhaust-flame-active' : 'hidden'}">
+                        <path d="M 25 0 Q -15 -8 -45 0 Q -15 8 25 0 Z" fill="url(#nitrousFlame)"/>
+                    </g>
+
+                    <ellipse cx="120" cy="78" rx="100" ry="6" fill="#000" opacity="0.45"/>
+                    <path d="M 10 58 Q 15 40 45 38 L 85 28 Q 115 14 150 16 L 180 24 Q 220 38 232 52 Q 236 60 225 68 L 15 68 Z" fill="url(#yellowMetallic)"/>
+                    <path d="M 88 28 Q 115 16 148 18 L 165 25 L 88 28 Z" fill="#0f172a"/>
+                    <polygon points="222,46 232,50 224,54" fill="#ffffff" class="headlight-beam"/>
+                    <rect x="5" y="50" width="10" height="6" rx="1" fill="#334155"/>
+
+                    <g transform="translate(182, 64)">
+                        <circle cx="0" cy="0" r="16" fill="#0f172a"/>
+                        <circle cx="0" cy="0" r="10" fill="url(#chromeRim)" class="${wheelClass}"/>
+                        <g class="${wheelClass}">
+                            <line x1="-8" y1="-8" x2="8" y2="8" stroke="#e2e8f0" stroke-width="2"/>
+                        </g>
+                    </g>
+                    <g transform="translate(58, 64)">
+                        <circle cx="0" cy="0" r="16" fill="#0f172a"/>
+                        <circle cx="0" cy="0" r="10" fill="url(#chromeRim)" class="${wheelClass}"/>
+                        <g class="${wheelClass}">
+                            <line x1="-8" y1="-8" x2="8" y2="8" stroke="#e2e8f0" stroke-width="2"/>
+                        </g>
+                    </g>
+                </svg>`
+            },
+            {
+                name: 'グリーン・SUV',
+                type: 'V8 Off-road SUV',
+                colorName: 'みどり',
+                badgeBg: 'bg-emerald-600',
+                getSvg: (wheelClass = '', flameActive = false) => `
+                <svg viewBox="0 0 260 85" class="w-40 sm:w-52 h-auto overflow-visible">
+                    <defs>
+                        <linearGradient id="greenMetallic" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#4ade80"/>
+                            <stop offset="30%" stop-color="#16a34a"/>
+                            <stop offset="70%" stop-color="#15803d"/>
+                            <stop offset="100%" stop-color="#064e3b"/>
+                        </linearGradient>
+                    </defs>
+
+                    <g transform="translate(-12, 54)" class="${flameActive ? 'exhaust-flame-active' : 'hidden'}">
+                        <path d="M 25 0 Q -15 -8 -45 0 Q -15 8 25 0 Z" fill="url(#nitrousFlame)"/>
+                    </g>
+
+                    <ellipse cx="120" cy="78" rx="95" ry="6" fill="#000" opacity="0.45"/>
+                    <path d="M 15 66 L 15 35 L 60 30 L 75 14 L 165 14 L 185 30 L 225 38 L 228 66 Z" fill="url(#greenMetallic)"/>
+                    <path d="M 78 18 L 120 18 L 120 30 L 65 30 Z" fill="url(#glassGrad)"/>
+
+                    <g transform="translate(172, 64)">
+                        <circle cx="0" cy="0" r="18" fill="#0f172a"/>
+                        <circle cx="0" cy="0" r="12" fill="url(#chromeRim)" class="${wheelClass}"/>
+                    </g>
+                    <g transform="translate(62, 64)">
+                        <circle cx="0" cy="0" r="18" fill="#0f172a"/>
+                        <circle cx="0" cy="0" r="12" fill="url(#chromeRim)" class="${wheelClass}"/>
+                    </g>
+                </svg>`
+            },
+            {
+                name: 'パトカー',
+                type: 'Interceptor V6',
+                colorName: 'しろとくろ',
+                badgeBg: 'bg-slate-700',
+                getSvg: (wheelClass = '', flameActive = false) => `
+                <svg viewBox="0 0 260 85" class="w-40 sm:w-52 h-auto overflow-visible">
+                    <g transform="translate(-15, 52)" class="${flameActive ? 'exhaust-flame-active' : 'hidden'}">
+                        <path d="M 25 0 Q -15 -8 -45 0 Q -15 8 25 0 Z" fill="url(#nitrousFlame)"/>
+                    </g>
+
+                    <ellipse cx="120" cy="78" rx="98" ry="6" fill="#000" opacity="0.45"/>
+                    <path d="M 12 58 Q 15 44 40 42 L 70 30 Q 95 18 140 18 L 170 26 Q 210 38 228 52 Q 234 60 222 68 L 15 68 Z" fill="#0f172a"/>
+                    <path d="M 80 24 L 150 24 L 155 58 L 75 58 Z" fill="#f8fafc"/>
+                    <path d="M 72 30 Q 95 20 135 20 L 160 28 L 72 30 Z" fill="url(#glassGrad)"/>
+
+                    <!-- Police Bar -->
+                    <g transform="translate(110, 12)">
+                        <rect x="-12" y="0" width="10" height="6" rx="2" fill="#ef4444"/>
+                        <rect x="2" y="0" width="10" height="6" rx="2" fill="#3b82f6"/>
+                    </g>
+
+                    <g transform="translate(175, 64)">
+                        <circle cx="0" cy="0" r="15" fill="#1e293b"/>
+                        <circle cx="0" cy="0" r="9" fill="url(#chromeRim)" class="${wheelClass}"/>
+                    </g>
+                    <g transform="translate(55, 64)">
+                        <circle cx="0" cy="0" r="15" fill="#1e293b"/>
+                        <circle cx="0" cy="0" r="9" fill="url(#chromeRim)" class="${wheelClass}"/>
+                    </g>
+                </svg>`
+            }
+        ];
+
+        let currentMode = 'learn';
+        let selectedNumber = 3;
+        let quizTargetNumber = 0;
+        let isAnimating = false;
+        let audioCtx = null;
+        let currentEngineProfile = 'v8'; // 'v8', 'turbo', 'v10'
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function setEngineProfile(profile) {
+            currentEngineProfile = profile;
+            document.querySelectorAll('.engine-selector-btn').forEach(btn => {
+                btn.className = "engine-selector-btn px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold border border-slate-600 text-xs sm:text-sm";
+            });
+            const activeBtn = document.getElementById(`engine-${profile}-btn`);
+            if (activeBtn) {
+                activeBtn.className = "engine-selector-btn px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-black border border-amber-300 shadow text-xs sm:text-sm";
+            }
+            speakText(`${profile.toUpperCase()} エンジン`);
+        }
+
+        /*
+         * HIGH-REALISM MULTI-OSCILLATOR EXHAUST ENGINE SYNTHESIZER
+         */
+        function playExhaustNoteRev(durationSeconds = 2.0, isFinishBoost = false) {
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const now = audioCtx.currentTime;
+
+                // Main Exhaust Sawtooth Oscillators for Engine Pitches
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
+                const noiseNode = audioCtx.createBufferSource();
+
+                // Bandpass Exhaust Filter for Deep Rumble
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+
+                const mainGain = audioCtx.createGain();
+
+                // Profile Configuration
+                let startFreq = 70;
+                let redlineFreq = 380;
+                if (currentEngineProfile === 'turbo') {
+                    startFreq = 90;
+                    redlineFreq = 420;
+                    filter.Q.value = 2.5;
+                } else if (currentEngineProfile === 'v10') {
+                    startFreq = 120;
+                    redlineFreq = 520;
+                    filter.Q.value = 4.0;
+                } else { // V8
+                    startFreq = 65;
+                    redlineFreq = 340;
+                    filter.Q.value = 1.8;
+                }
+
+                if (isFinishBoost) {
+                    redlineFreq += 100; // Extra High Pitch Exhaust Screamer
+                }
+
+                osc1.type = 'sawtooth';
+                osc2.type = 'sawtooth';
+
+                // Frequency Envelope (Rev Up -> Screaming Redline -> Blow off / Drop)
+                osc1.frequency.setValueAtTime(startFreq, now);
+                osc1.frequency.exponentialRampToValueAtTime(redlineFreq, now + durationSeconds * 0.65);
+                osc1.frequency.exponentialRampToValueAtTime(startFreq * 0.8, now + durationSeconds);
+
+                osc2.frequency.setValueAtTime(startFreq * 1.5, now);
+                osc2.frequency.exponentialRampToValueAtTime(redlineFreq * 1.5, now + durationSeconds * 0.65);
+                osc2.frequency.exponentialRampToValueAtTime(startFreq, now + durationSeconds);
+
+                // Exhaust Filter Envelope
+                filter.frequency.setValueAtTime(startFreq * 2, now);
+                filter.frequency.exponentialRampToValueAtTime(redlineFreq * 2.5, now + durationSeconds * 0.65);
+
+                // Noise Buffer for Exhaust Gas Rumble
+                const bufferSize = audioCtx.sampleRate * durationSeconds;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                noiseNode.buffer = buffer;
+
+                const noiseGain = audioCtx.createGain();
+                noiseGain.gain.setValueAtTime(0.12, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + durationSeconds);
+
+                // Gain Envelope
+                mainGain.gain.setValueAtTime(0.01, now);
+                mainGain.gain.linearRampToValueAtTime(0.35, now + 0.15);
+                mainGain.gain.setValueAtTime(0.35, now + durationSeconds * 0.7);
+                mainGain.gain.exponentialRampToValueAtTime(0.001, now + durationSeconds);
+
+                osc1.connect(filter);
+                osc2.connect(filter);
+                noiseNode.connect(noiseGain);
+                noiseGain.connect(filter);
+
+                filter.connect(mainGain);
+                mainGain.connect(audioCtx.destination);
+
+                osc1.start(now);
+                osc2.start(now);
+                noiseNode.start(now);
+
+                osc1.stop(now + durationSeconds);
+                osc2.stop(now + durationSeconds);
+                noiseNode.stop(now + durationSeconds);
+
+                // Turbo Blow-Off Valve Whistle Effect at the end of acceleration
+                if (currentEngineProfile === 'turbo' || isFinishBoost) {
+                    setTimeout(() => {
+                        playBlowOffValveSound();
+                    }, durationSeconds * 650);
+                }
+
+                // Exhaust Backfire Pop / Crackles near finish line
+                if (isFinishBoost) {
+                    setTimeout(() => {
+                        playExhaustBackfireCrackles();
+                    }, durationSeconds * 700);
+                }
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Turbo Blow-Off Valve Whistle Sound
+        function playBlowOffValveSound() {
+            if (!audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(2200, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } catch(e) {}
+        }
+
+        // Exhaust Backfire Pops & Crackles
+        function playExhaustBackfireCrackles() {
+            if (!audioCtx) return;
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    try {
+                        const now = audioCtx.currentTime;
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(120 + Math.random() * 80, now);
+                        gain.gain.setValueAtTime(0.3, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.05);
+                    } catch(e) {}
+                }, i * 70);
+            }
+        }
+
+        function playHonkSound() {
+            initAudio();
+            if (!audioCtx) return;
+            try {
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc1.type = 'triangle';
+                osc2.type = 'triangle';
+
+                osc1.frequency.setValueAtTime(380, audioCtx.currentTime);
+                osc2.frequency.setValueAtTime(480, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc1.start();
+                osc2.start();
+                osc1.stop(audioCtx.currentTime + 0.4);
+                osc2.stop(audioCtx.currentTime + 0.4);
+
+                speakText("ぷぷー！");
+            } catch(e) {}
+        }
+
+        function playFanfareSound() {
+            initAudio();
+            if (!audioCtx) return;
+
+            const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+            notes.forEach((freq, idx) => {
+                setTimeout(() => {
+                    try {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.4);
+                    } catch(e) {}
+                }, idx * 100);
+            });
+        }
+
+        function testExhaustNoteSound() {
+            playExhaustNoteRev(2.2, true);
+        }
+
+        // Japanese Voice Synthesis
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.15;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const learnBtn = document.getElementById('mode-learn-btn');
+            const quizBtn = document.getElementById('mode-quiz-btn');
+            const learnControls = document.getElementById('learn-controls');
+            const quizControls = document.getElementById('quiz-controls');
+
+            if (mode === 'learn') {
+                learnBtn.className = "px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 bg-white text-orange-600 shadow-md flex items-center gap-1";
+                quizBtn.className = "px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 text-white hover:bg-white/10 flex items-center gap-1";
+                learnControls.classList.remove('hidden');
+                quizControls.classList.add('hidden');
+                document.getElementById('info-text').innerText = "かずボタンを おして リアルな くるまを かぞえてみよう！";
+                selectNumber(selectedNumber);
+            } else {
+                quizBtn.className = "px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 bg-white text-orange-600 shadow-md flex items-center gap-1";
+                learnBtn.className = "px-3 py-1.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 text-white hover:bg-white/10 flex items-center gap-1";
+                learnControls.classList.add('hidden');
+                quizControls.classList.remove('hidden');
+                generateNextQuizQuestion();
+            }
+        }
+
+        function renderCars(count, animateDrive = false, flameBoost = false) {
+            const container = document.getElementById('road-container');
+            container.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                const carData = REALISTIC_CARS[i % REALISTIC_CARS.length];
+                
+                const lane = document.createElement('div');
+                lane.className = "w-full bg-slate-900 h-16 sm:h-20 rounded-2xl relative overflow-hidden flex items-center border-2 border-slate-700 shadow-inner";
+                
+                const roadDash = document.createElement('div');
+                roadDash.className = "absolute inset-0 w-full h-full opacity-30 pointer-events-none";
+                roadDash.style.backgroundImage = "linear-gradient(90deg, #fef08a 50%, transparent 50%)";
+                roadDash.style.backgroundSize = "60px 4px";
+                roadDash.style.backgroundPosition = "center";
+                roadDash.style.backgroundRepeat = "repeat-x";
+                if (animateDrive) {
+                    roadDash.classList.add('road-animating');
+                }
+                lane.appendChild(roadDash);
+
+                const carWrapper = document.createElement('div');
+                carWrapper.id = `car-wrapper-${i}`;
+                carWrapper.className = "absolute left-2 sm:left-4 flex items-center gap-2 transition-all duration-700 ease-out z-10 pop-in cursor-pointer";
+                
+                const wheelSpinClass = animateDrive ? 'wheel-spinning' : '';
+                
+                const carGraphic = document.createElement('div');
+                carGraphic.className = "transform hover:scale-105 transition-transform flex items-center";
+                carGraphic.innerHTML = carData.getSvg(wheelSpinClass, flameBoost);
+                
+                carGraphic.onclick = () => {
+                    playExhaustNoteRev(1.5, true);
+                    playHonkSound();
+                };
+
+                const numBadge = document.createElement('div');
+                numBadge.className = `w-8 h-8 sm:w-10 sm:h-10 rounded-full ${carData.badgeBg} border-2 border-white text-white font-black text-base sm:text-xl flex items-center justify-center shadow-lg transform -translate-x-3`;
+                numBadge.innerText = i + 1;
+
+                carWrapper.appendChild(carGraphic);
+                carWrapper.appendChild(numBadge);
+                lane.appendChild(carWrapper);
+
+                container.appendChild(lane);
+            }
+        }
+
+        function selectNumber(num) {
+            if (isAnimating) return;
+            initAudio();
+            selectedNumber = num;
+            
+            document.querySelectorAll('.num-btn').forEach((btn, idx) => {
+                if (idx + 1 === num) {
+                    btn.classList.add('ring-4', 'ring-yellow-300', 'scale-110');
+                } else {
+                    btn.classList.remove('ring-4', 'ring-yellow-300', 'scale-110');
+                }
+            });
+
+            const numberWords = ["", "いち", "に", "さん", "よん", "ご"];
+            document.getElementById('info-text').innerText = `「${num}」 （${numberWords[num]}） くるまが ${num}だい！`;
+            
+            speakText(`${num}！ ${numberWords[num]}！`);
+            renderCars(num);
+        }
+
+        function startDrivingAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            initAudio();
+
+            const driveBtn = document.getElementById('drive-btn');
+            const speedLines = document.getElementById('speed-lines-overlay');
+            driveBtn.disabled = true;
+            driveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            speedLines.classList.remove('hidden');
+
+            // Render with wheels spinning and NITROUS EXHAUST FLAMES active
+            renderCars(selectedNumber, true, true);
+            playExhaustNoteRev(selectedNumber * 0.9 + 1.2, true);
+
+            const numberWords = ["", "いちだい！", "になだい！", "さんだい！", "よんだい！", "ごだい！"];
+
+            for (let i = 0; i < selectedNumber; i++) {
+                setTimeout(() => {
+                    const car = document.getElementById(`car-wrapper-${i}`);
+                    if (car) {
+                        car.style.left = "72%"; // Reach Goal Flag
+                        speakText(numberWords[i + 1]);
+
+                        const badge = car.querySelector('div:last-child');
+                        if (badge) {
+                            badge.classList.add('animate-bounce');
+                        }
+                    }
+                }, i * 900);
+            }
+
+            // Finish Goal Celebration Trigger
+            setTimeout(() => {
+                speedLines.classList.add('hidden');
+                speakText(`ぜんぶで ${selectedNumber}だい！ GOAL!! ゴール！`);
+                playFanfareSound();
+
+                // Trigger Massive Confetti Explosion
+                if (window.confetti) {
+                    window.confetti({
+                        particleCount: 120,
+                        spread: 80,
+                        origin: { y: 0.6 }
+                    });
+                }
+
+                showCelebration();
+
+                setTimeout(() => {
+                    isAnimating = false;
+                    driveBtn.disabled = false;
+                    driveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    renderCars(selectedNumber, false, false);
+                }, 1500);
+
+            }, selectedNumber * 900 + 600);
+        }
+
+        function generateNextQuizQuestion() {
+            if (isAnimating) return;
+            initAudio();
+
+            quizTargetNumber = Math.floor(Math.random() * 5) + 1;
+            
+            document.getElementById('info-text').innerText = "くるまは ぜんぶで なんだい あるかな？";
+            speakText("くるまは ぜんぶで なんだい あるかな？");
+
+            renderCars(quizTargetNumber, false, false);
+        }
+
+        function checkAnswer(chosenNum) {
+            if (isAnimating) return;
+            initAudio();
+
+            if (chosenNum === quizTargetNumber) {
+                playExhaustNoteRev(2.0, true);
+                playFanfareSound();
+                speakText("せいかい！ GOAL!! ゴール！");
+                
+                if (window.confetti) {
+                    window.confetti({
+                        particleCount: 100,
+                        spread: 75,
+                        origin: { y: 0.6 }
+                    });
+                }
+
+                showCelebration();
+            } else {
+                speakText("おしい！ もういちど かぞえてみてね！");
+                document.getElementById('info-text').innerText = "おしい！ もういちど かぞえてみよう！";
+            }
+        }
+
+        function showCelebration() {
+            const overlay = document.getElementById('celebration-overlay');
+            const card = document.getElementById('celebration-card');
+
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-75');
+            card.classList.add('scale-100');
+        }
+
+        function closeCelebration() {
+            const overlay = document.getElementById('celebration-overlay');
+            const card = document.getElementById('celebration-card');
+
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-75');
+
+            if (currentMode === 'quiz') {
+                generateNextQuizQuestion();
+            }
+        }
+
+        window.onload = function () {
+            selectNumber(3);
+        };
+    </script>
+</body>
+</html>
